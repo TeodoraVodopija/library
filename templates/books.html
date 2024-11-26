@@ -13,16 +13,15 @@
     <!-- Header Section -->
     <div class="header">
       <h3>Hello, {{ current_user.username }} {{ current_user.lastname }}!</h3>
-      <p>Is Admin: {{ current_user.is_admin }}</p>
       {% if current_user.is_authenticated and current_user.role == 'admin' %}
       <button class="all-users-btn" onclick="showAllUsersModal()">
         All Users
       </button>
-      {% endif %}
-      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
       <button class="deactivate-btn" onclick="showDeactivateModal()">
         Deactivate Account
       </button>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
     </div>
 
     <!-- Page Title -->
@@ -245,12 +244,26 @@
       <div class="modal-content">
         <span class="modal-close" onclick="hideAllUsersModal()">×</span>
         <h2>
-          All Users
-          <button id="modal-btn add-user-btn" onclick="showAddUserModal()">
-            Add User
-          </button>
+          <div class="button-container">
+            All Users
+            <button
+              id="modal-btn add-user-btn"
+              class="add-user-btn"
+              onclick="showAddUserModal()"
+            >
+              Add User
+            </button>
+            <button
+              id="modal-btn delete-all-users-btn"
+              class="delete-all-users-btn"
+              onclick="showDeleteAllUsersModal()"
+            >
+              Delete All Users
+            </button>
+          </div>
         </h2>
         <div id="userListContainer">
+          <ul></ul>
           <!-- User list will be dynamically populated -->
         </div>
       </div>
@@ -301,7 +314,23 @@
         </div>
       </div>
     </div>
-
+    <!-- Delete All Users Confirmation Modal -->
+    <div class="modal" id="deleteAllUsersConfirmationModal">
+      <div class="modal-content">
+        <span
+          class="modal-close"
+          onclick="hideDeleteAllUsersConfirmationModal()"
+          >×</span
+        >
+        <h2>Are you sure you want to delete all users?</h2>
+        <div class="modal-actions">
+          <button onclick="confirmDeleteAllUsers()">Yes, Delete All</button>
+          <button onclick="hideDeleteAllUsersConfirmationModal()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
     <!-- Toast Message -->
     <div id="toastMessage" class="toast">
       <span id="toastContent"></span>
@@ -531,15 +560,17 @@
                 userRow.id = `userRow_${user.id}`;
                 userRow.classList.add("user-row");
                 userRow.innerHTML = `
-            <span>${user.username} ${user.lastname}</span>
+            <span><b>${user.username} ${user.lastname}</b></span>
             <!-- Alter button -->
-            <button class="modal-btn alter-user-btn" onclick="alterUser(${user.id})">
+            <div class="button-container">
+            <button class="alter-user-btn" onclick="alterUser(${user.id})">
                 Alter
             </button>
             <!-- Delete button -->
-            <button class="modal-btn delete-user-btn" onclick="showDeleteUserModal(${user.id})">
+            <button class="delete-user-btn" onclick="showDeleteUserModal(${user.id})">
                 Delete
             </button>
+            </div>
           `;
                 userListContainer.appendChild(userRow);
               });
@@ -724,6 +755,55 @@
         const messageModal = document.getElementById("messageModal");
         messageModal.style.display = "none"; // Hide the modal
       }
+
+      // Show Delete All Users Confirmation Modal
+      function showDeleteAllUsersModal() {
+        const modal = document.getElementById(
+          "deleteAllUsersConfirmationModal"
+        );
+        modal.style.display = "block";
+      }
+
+      // Hide Delete All Users Confirmation Modal
+      function hideDeleteAllUsersConfirmationModal() {
+        const modal = document.getElementById(
+          "deleteAllUsersConfirmationModal"
+        );
+        modal.style.display = "none";
+      }
+
+      // Confirm Delete All Users
+      function confirmDeleteAllUsers() {
+        // Send request to the server to delete all users
+        fetch(`/delete_all_users`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Failed to delete all users.");
+            }
+            return response.json();
+          })
+          .then((data) => {
+            if (data.success) {
+              // Hide the delete confirmation modal
+              hideDeleteAllUsersConfirmationModal();
+              // Refresh the page to reflect changes
+              location.reload();
+            }
+          })
+          .catch((error) => {
+            console.error("Error deleting all users:", error);
+            showToastMessage(
+              "Error deleting all users. Please try again.",
+              false
+            );
+          });
+      }
+
       // Show Toast Message
       function showToastMessage(message, isSuccess = true) {
         const toast = document.getElementById("toastMessage");

@@ -33,7 +33,7 @@ body {
 
 .logout-btn:hover,
 .deactivate-btn:hover,
-.all-users-btn :hover {
+.all-users-btn:hover {
   background-color: #ff4500;
 }
 
@@ -53,7 +53,11 @@ h1 {
 
 .add-book-btn,
 .alter-book-btn,
-.delete-book-btn {
+.delete-book-btn,
+.add-user-btn,
+.delete-all-users-btn,
+.alter-user-btn,
+.delete-user-btn {
   padding: 10px 20px;
   border-radius: 5px;
   font-size: 16px;
@@ -74,31 +78,39 @@ h1 {
   border: none;
 }
 
-.add-book-btn {
-  background-color: #4caf50;
-  color: white;
+.add-book-btn,
+.add-user-btn {
+  background-color: #4caf50 !important;
+  color: white !important;
 }
 
-.add-book-btn:hover {
+.add-book-btn:hover,
+.add-user-btn:hover {
   background-color: #45a049;
 }
 
 .alter-book-btn,
+.alter-user-btn,
 .alter-btn {
-  background-color: #ffa500;
-  color: white;
+  background-color: #ffa500 !important;
+  color: white !important;
 }
 
-.alter-book-btn:hover {
+.alter-book-btn:hover,
+.alter-user-btn:hover {
   background-color: #e59400;
 }
 
-.delete-book-btn {
-  background-color: #f44336;
-  color: white;
+.delete-book-btn,
+.delete-user-btn,
+.delete-all-users-btn {
+  background-color: #f44336 !important;
+  color: white !important;
 }
 
-.delete-book-btn:hover {
+.delete-book-btn:hover,
+.delete-user-btn:hover,
+.delete-all-users-btn:hover {
   background-color: #d32f2f;
 }
 

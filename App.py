@@ -1,7 +1,8 @@
+import os
+import traceback
 from flask import Flask, jsonify, render_template, redirect, url_for, request, session, flash
 from flask_mysqldb import MySQL
-from flask_login import LoginManager, UserMixin, login_user, current_user
-import os
+from flask_login import LoginManager, UserMixin, login_user, logout_user, current_user
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -162,9 +163,45 @@ def deactivate_user(user_id):
         return jsonify({"success": True, "message": f"User with ID {user_id} deleted successfully."}), 200
 
     except Exception:
-        import traceback
         traceback.print_exc()  # Print stack trace for debugging
         return jsonify({"success": False, "error": "Failed to delete user."}), 500
+
+@app.route('/delete_all_users', methods=['DELETE'])
+def delete_all_users():
+    try:
+        # Check if the user is logged in
+        if not current_user.is_authenticated:
+            return jsonify({"success": False, "error": "User not logged in"}), 401
+
+        # Check if the logged-in user has the required role (e.g., admin)
+        if current_user.role != 'admin':
+            return jsonify({"success": False, "error": "Unauthorized action"}), 403
+
+        # Connect to the database
+        cur = mysql.connection.cursor()
+
+        # Delete associated books for all non-admin users
+        print("Deleting books for all non-admin users...")
+        cur.execute("""
+            DELETE FROM books
+            WHERE user_id IN (SELECT id FROM users WHERE role != 'admin')
+        """)
+        print("Books deleted for all non-admin users.")
+
+        # Delete all users except admins
+        print("Deleting all non-admin users...")
+        cur.execute("DELETE FROM users WHERE role != 'admin'")
+        mysql.connection.commit()
+        print("Non-admin users deleted.")
+
+        # Close the cursor
+        cur.close()
+
+        return jsonify({"success": True, "message": "All non-admin users deleted successfully."}), 200
+
+    except Exception as e:
+        traceback.print_exc()  # Print stack trace for debugging
+        return jsonify({"success": False, "error": "Failed to delete all users."}), 500
 
 @app.route('/')
 def home():
@@ -344,12 +381,11 @@ def alter_book():
     author = request.form.get('author')
     publisher = request.form.get('publisher')
     year_published = int(request.form.get('alter_year_published'))  # Ensure the year is an integer
-    image_url = request.form.get('image_url')
-    
+    image_url = request.form.get('image_url')    
     # Limit URL length before saving to the database
-    MAX_URL_LENGTH = 512
-    if image_url and len(image_url) > MAX_URL_LENGTH:
-        image_url = image_url[:MAX_URL_LENGTH]
+    max_url_length = 512
+    if image_url and len(image_url) > max_url_length:
+        image_url = image_url[:max_url_length]
 
     image_file = request.files.get('image_file')
     if image_file and allowed_file(image_file.filename):
@@ -381,7 +417,6 @@ def delete_book(book_id):
         cur.execute("DELETE FROM books WHERE id = %s", (book_id,))
         mysql.connection.commit()
         cur.close()
-        
         # Return a success response
         return jsonify({"success": True}), 200
     except Exception as e:
@@ -394,15 +429,12 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-from flask_login import logout_user, current_user
-
 @app.route('/deactivate_account', methods=['DELETE'])
 def deactivate_account():
     try:
         # Check if the user is logged in
         if not current_user.is_authenticated:
             return jsonify({"success": False, "error": "User not logged in"}), 401
-        
         user_id = current_user.id  # Get user ID from current_user
 
         # Connect to the database
@@ -427,10 +459,10 @@ def deactivate_account():
 
         return jsonify({"success": True, "redirect": "/login"}), 200
 
-    except Exception as e:
-        import traceback
+    except Exception:
         traceback.print_exc()  # Print stack trace for debugging
         return jsonify({"success": False, "error": "Failed to deactivate account."}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)
