@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library - Books</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='styles.css') }}"
+    />
+  </head>
+  <body>
+    <!-- Header Section -->
+    <div class="header">
+      <h3>Hello, {{ current_user.username }} {{ current_user.lastname }}!</h3>
+      <p>Is Admin: {{ current_user.is_admin }}</p>
+      {% if current_user.is_authenticated and current_user.role == 'admin' %}
+      <button class="all-users-btn" onclick="showAllUsersModal()">
+        All Users
+      </button>
+      {% endif %}
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+      <button class="deactivate-btn" onclick="showDeactivateModal()">
+        Deactivate Account
+      </button>
+    </div>
+
+    <!-- Page Title -->
+    <h1>List of Books</h1>
+
+    <!-- Action Buttons -->
+    <div class="button-container">
+      <button class="add-book-btn" onclick="showAddBookModal()">
+        Add New Book
+      </button>
+      <!-- Global buttons for Alter and Delete, hidden by default -->
+      <button
+        class="alter-book-btn"
+        id="alterBookBtn"
+        onclick="toggleAlterButtons()"
+      >
+        Alter Book
+      </button>
+      <button
+        class="delete-book-btn"
+        id="deleteBookBtn"
+        onclick="toggleDeleteButtons()"
+      >
+        Delete Book
+      </button>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="books-container">
+      {% if books %} {% for book in books %}
+      <div class="book-card" id="bookCard_{{ book.id }}">
+        <!-- Book Details -->
+        <div class="book-image">
+          {% if book.image_url %}
+          <img src="{{ book.image_url }}" alt="Book Image" />
+          {% else %}
+          <img
+            src="{{ url_for('static', filename='placeholder.png') }}"
+            alt="Placeholder Image"
+          />
+          {% endif %}
+        </div>
+        <div class="book-info">
+          <h3>{{ book.title }}</h3>
+          <p><strong>Author:</strong> {{ book.author }}</p>
+          <p><strong>Year:</strong> {{ book.year_published }}</p>
+          <p><strong>Publisher:</strong> {{ book.publisher }}</p>
+        </div>
+        <!-- Alter and Delete buttons for each book, initially hidden -->
+        {% if current_user.is_admin or book.owner_id == current_user.id %}
+        <button
+          class="alter-btn"
+          id="alterBtn_{{ book.id }}"
+          style="display: none"
+          onclick="openAlterBookModal('{{ book.id }}')"
+        >
+          Alter Book
+        </button>
+        <button
+          class="delete-btn"
+          id="deleteBtn_{{ book.id }}"
+          style="display: none"
+          onclick="confirmDelete('{{ book.id }}')"
+        >
+          X
+        </button>
+        {% endif %}
+      </div>
+      {% endfor %} {% else %}
+      <p>No books available.</p>
+      {% endif %}
+    </div>
+
+    <!-- Add Book Modal -->
+    <div class="modal" id="addBookModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideAddBookModal()">×</span>
+        <h2>Add New Book</h2>
+        <form
+          action="{{ url_for('add_book') }}"
+          method="POST"
+          enctype="multipart/form-data"
+        >
+          <label for="title">Title:</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            placeholder="Enter the book title"
+            required
+          />
+          <label for="author">Author:</label>
+          <input
+            type="text"
+            id="author"
+            name="author"
+            value="{{ current_user.username }} {{ current_user.lastname }}"
+            readonly
+            required
+          />
+          <label for="publisher">Publisher:</label>
+          <input
+            type="text"
+            id="publisher"
+            name="publisher"
+            placeholder="Enter the publisher"
+          />
+          <label for="year_published">Year:</label>
+          <select id="year_published" name="year_published" required>
+            <option value="" disabled selected>Select a year</option>
+          </select>
+          <label for="image_url">Image URL or Upload:</label>
+          <input
+            type="text"
+            id="image_url"
+            name="image_url"
+            placeholder="Paste an image URL or leave empty to upload"
+          />
+          <label for="image_file" class="file-label">Or upload an image:</label>
+          <input
+            type="file"
+            id="image_file"
+            name="image_file"
+            accept="image/*"
+          />
+          <button type="submit">Add Book</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Alter Book Modal -->
+    <div class="modal" id="alterBookModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideAlterBookModal()">×</span>
+        <h2>Alter Book</h2>
+        <form
+          action="{{ url_for('alter_book') }}"
+          method="POST"
+          enctype="multipart/form-data"
+        >
+          <input type="hidden" id="alter_book_id" name="id" />
+          <label for="alter_title">Title:</label>
+          <input
+            type="text"
+            id="alter_title"
+            name="title"
+            placeholder="Enter the book title"
+            required
+          />
+          <label for="alter_author">Author:</label>
+          <input
+            type="text"
+            id="alter_author"
+            name="author"
+            value="{{ current_user.username }} {{ current_user.lastname }}"
+            readonly
+            required
+          />
+          <label for="alter_publisher">Publisher:</label>
+          <input
+            type="text"
+            id="alter_publisher"
+            name="publisher"
+            placeholder="Enter the publisher"
+          />
+          <label for="alter_year_published">Year:</label>
+          <select
+            id="alter_year_published"
+            name="alter_year_published"
+            required
+          >
+            <option value="" disabled selected>Select a year</option>
+          </select>
+          <label for="alter_image_url">Image URL or Upload:</label>
+          <input
+            type="text"
+            id="alter_image_url"
+            name="image_url"
+            placeholder="Paste an image URL or leave empty to upload"
+          />
+          <label for="alter_image_file" class="file-label"
+            >Or upload an image:</label
+          >
+          <input
+            type="file"
+            id="alter_image_file"
+            name="image_file"
+            accept="image/*"
+          />
+          <button type="submit">Save Changes</button>
+        </form>
+      </div>
+    </div>
+    <!-- Delete Confirmation Modal -->
+    <div class="modal" id="deleteConfirmationModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideDeleteConfirmationModal()"
+          >×</span
+        >
+        <h2>Are you sure you want to delete this book?</h2>
+        <div class="modal-actions">
+          <button onclick="confirmDeleteBook()">Yes, Delete</button>
+          <button onclick="hideDeleteConfirmationModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- Deactivate Account Confirmation Modal -->
+    <div class="modal" id="deactivateAccountModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideDeactivateModal()">×</span>
+        <h2>Are you sure you want to deactivate your account?</h2>
+        <div class="modal-actions">
+          <button onclick="deactivateAccount()">Yes, Deactivate</button>
+          <button onclick="hideDeactivateModal()">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <!-- All Users Modal -->
+    <div class="modal" id="allUsersModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideAllUsersModal()">×</span>
+        <h2>
+          All Users
+          <button id="modal-btn add-user-btn" onclick="showAddUserModal()">
+            Add User
+          </button>
+        </h2>
+        <div id="userListContainer">
+          <!-- User list will be dynamically populated -->
+        </div>
+      </div>
+    </div>
+    <!-- Add User in Users Modal -->
+    <div class="modal" id="addUserModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideAddUserModal()">×</span>
+        <h2>Add New User</h2>
+        <form id="addUserForm">
+          <input type="text" id="newUsername" placeholder="Username" required />
+          <input type="text" id="newLastname" placeholder="Lastname" required />
+          <input type="email" id="newEmail" placeholder="Email" required />
+          <button type="submit" class="modal-btn">Add User</button>
+        </form>
+      </div>
+    </div>
+    <!-- Alter User in Users Modal -->
+    <div class="modal" id="alterUserModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideAlterUserModal()">×</span>
+        <h2>Alter User</h2>
+        <form id="alterUserForm">
+          <input
+            type="text"
+            id="alterUsername"
+            placeholder="Username"
+            required
+          />
+          <input
+            type="text"
+            id="alterLastname"
+            placeholder="Lastname"
+            required
+          />
+          <button type="submit" class="modal-btn">Update User</button>
+        </form>
+      </div>
+    </div>
+    <!-- Delete Users in Users Modal -->
+    <div class="modal" id="deleteUserModal">
+      <div class="modal-content">
+        <span class="modal-close" onclick="hideDeleteUserModal()">×</span>
+        <h2>Are you sure you want to delete this user?</h2>
+        <div class="modal-actions">
+          <button id="confirmDeleteButton">Yes, Delete</button>
+          <button id="cancelDeleteButton">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Message -->
+    <div id="toastMessage" class="toast">
+      <span id="toastContent"></span>
+      <button class="toast-close" onclick="hideToastMessage()">×</button>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        // Add year selection for both Add and Alter Modals
+        const currentYear = 2024;
+        const startYear = 1200;
+
+        // Populate year dropdown for Add Book Modal
+        const yearSelect = document.getElementById("year_published");
+        for (let year = currentYear; year >= startYear; year--) {
+          const option = document.createElement("option");
+          option.value = year;
+          option.textContent = year;
+          yearSelect.appendChild(option);
+        }
+
+        // Populate year dropdown for Alter Book Modal dynamically when the modal is opened
+        const alterYearSelect = document.getElementById("alter_year_published");
+        for (let year = currentYear; year >= startYear; year--) {
+          const option = document.createElement("option");
+          option.value = year;
+          option.textContent = year;
+          alterYearSelect.appendChild(option);
+        }
+      });
+
+      function showAddBookModal() {
+        document.getElementById("addBookModal").style.display = "block";
+      }
+
+      function hideAddBookModal() {
+        document.getElementById("addBookModal").style.display = "none";
+      }
+
+      function openAlterBookModal(bookId) {
+        if (bookId) {
+          fetch(`/get_book/${bookId}`)
+            .then((response) => response.json())
+            .then((book) => {
+              if (book.error) {
+                showToastMessage("Failed to load book details. ", false);
+                return;
+              }
+
+              // Populate the modal fields with the fetched book details
+              document.getElementById("alter_book_id").value = book.id;
+              document.getElementById("alter_title").value = book.title;
+              document.getElementById("alter_author").value = book.author;
+              document.getElementById("alter_publisher").value = book.publisher;
+              const alterYearSelect = document.getElementById(
+                "alter_year_published"
+              );
+              alterYearSelect.value = book.year_published;
+              document.getElementById("alter_image_url").value = book.image_url;
+
+              // Show the modal
+              document.getElementById("alterBookModal").style.display = "block";
+            })
+            .catch((error) => {
+              showToastMessage(
+                "Failed to load book details. Please try again.",
+                false
+              );
+              console.error(error);
+            });
+        }
+      }
+
+      function hideAlterBookModal() {
+        document.getElementById("alterBookModal").style.display = "none";
+      }
+
+      // Toggle visibility of Alter buttons for each book
+      function toggleAlterButtons() {
+        let books = document.querySelectorAll(".book-card");
+        books.forEach((book) => {
+          let alterButton = book.querySelector(".alter-btn");
+          if (alterButton) {
+            alterButton.style.display =
+              alterButton.style.display === "none" ? "inline-block" : "none";
+          }
+        });
+      }
+
+      // Toggle visibility of Delete buttons for each book
+      function toggleDeleteButtons() {
+        let books = document.querySelectorAll(".book-card");
+        books.forEach((book) => {
+          let deleteButton = book.querySelector(".delete-btn");
+          if (deleteButton) {
+            deleteButton.style.display =
+              deleteButton.style.display === "none" ? "inline-block" : "none";
+          }
+        });
+      }
+
+      function deleteBook(bookId) {
+        if (confirm("Are you sure you want to delete this book?")) {
+          window.location.href = `/delete_book/${bookId}`;
+        }
+      }
+
+      function confirmDelete(bookId) {
+        bookToDeleteId = bookId; // Store the book ID to delete
+        document.getElementById("deleteConfirmationModal").style.display =
+          "block";
+      }
+
+      // Function to hide the delete confirmation modal
+      function hideDeleteConfirmationModal() {
+        document.getElementById("deleteConfirmationModal").style.display =
+          "none";
+      }
+
+      // Function to show the delete confirmation modal
+      function confirmDeleteBook() {
+        if (bookToDeleteId !== null) {
+          // Send request to the server to delete the book using DELETE method
+          fetch(`/delete_book/${bookToDeleteId}`, {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          })
+            .then((response) => {
+              if (!response.ok) {
+                // If the server responds with an error, throw an error
+                throw new Error("Failed to delete the book.");
+              }
+              return response.json(); // parse response JSON
+            })
+            .then((data) => {
+              if (data.success) {
+                // If deletion was successful, remove the book from the DOM
+                const bookCard = document.getElementById(
+                  `bookCard_${bookToDeleteId}`
+                );
+                if (bookCard) {
+                  bookCard.remove();
+                }
+                // Hide the delete confirmation modal
+                hideDeleteConfirmationModal();
+                // Refresh the page to reflect the changes
+                location.reload(); // This will reload the page
+              }
+              // No need to show any error message here, just silently return on success
+            })
+            .catch((error) => {
+              console.error("Error deleting book:", error);
+              showToastMessage(
+                "Error deleting the book. Please try again.",
+                false
+              );
+            });
+        }
+      }
+      // Show the Deactivate Account Modal
+      function showDeactivateModal() {
+        document.getElementById("deactivateAccountModal").style.display =
+          "block";
+      }
+
+      // Hide the Deactivate Account Modal
+      function hideDeactivateModal() {
+        document.getElementById("deactivateAccountModal").style.display =
+          "none";
+      }
+
+      // Handle Deactivating Account
+      function deactivateAccount() {
+        fetch("/deactivate_account", {
+          method: "DELETE",
+        })
+          .then((response) => {
+            console.log("Response status:", response.status);
+            if (!response.ok) {
+              console.error(
+                `Server responded with error: ${response.statusText}`
+              );
+              throw new Error(`Server error: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Response data:", data);
+            if (data.success) {
+              window.location.href = data.redirect;
+            } else {
+              showToastMessage("An error occurred. Please try again.", false);
+            }
+          })
+          .catch((error) => {
+            console.error(
+              "Error deactivating account:",
+              error.message || error
+            );
+            showToastMessage(
+              "Failed to deactivate account. Please try again later.",
+              false
+            );
+          });
+      }
+
+      // Show modal and fetch users
+      function showAllUsersModal() {
+        const modal = document.getElementById("allUsersModal");
+        modal.style.display = "block"; // Make the modal visible
+
+        // Fetch users from the server
+        fetch("/users") // Make sure this matches your route
+          .then((response) => response.json())
+          .then((users) => {
+            console.log(users); // Log the response to see what you're getting
+            const userListContainer =
+              document.getElementById("userListContainer");
+            userListContainer.innerHTML = ""; // Clear the existing list before repopulating
+
+            if (users.length > 0) {
+              users.forEach((user) => {
+                const userRow = document.createElement("div");
+                userRow.id = `userRow_${user.id}`;
+                userRow.classList.add("user-row");
+                userRow.innerHTML = `
+            <span>${user.username} ${user.lastname}</span>
+            <!-- Alter button -->
+            <button class="modal-btn alter-user-btn" onclick="alterUser(${user.id})">
+                Alter
+            </button>
+            <!-- Delete button -->
+            <button class="modal-btn delete-user-btn" onclick="showDeleteUserModal(${user.id})">
+                Delete
+            </button>
+          `;
+                userListContainer.appendChild(userRow);
+              });
+            } else {
+              showToastMessage("No users found.", false);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching users:", error);
+            showToastMessage("Failed to load users. Please try again.", false);
+          });
+      }
+
+      function hideAllUsersModal() {
+        const modal = document.getElementById("allUsersModal");
+        modal.style.display = "none"; // Hide the modal when closed
+      }
+
+      // Show the Delete User Modal
+      // Show the Delete User Modal
+      function showDeleteUserModal(userId) {
+        // Show the modal
+        const deleteModal = document.getElementById("deleteUserModal");
+        deleteModal.style.display = "block";
+
+        // Select confirm and cancel buttons
+        const confirmButton = document.getElementById("confirmDeleteButton");
+        const cancelButton = document.getElementById("cancelDeleteButton");
+
+        // Set up the action for the Confirm Delete button
+        confirmButton.onclick = function () {
+          // Hide the modal immediately
+          hideDeleteUserModal();
+
+          // Proceed with deletion
+          fetch(`/deactivate_user/${userId}`, { method: "DELETE" })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                // Show success toast
+                showToastMessage("User deleted successfully!", true);
+                // Remove the user row from the UI
+                document.getElementById(`userRow_${userId}`).remove();
+              } else {
+                // Show error toast
+                showToastMessage(data.error || "Failed to delete user.", false);
+              }
+            })
+            .catch((error) => {
+              console.error("Error deleting user:", error);
+              showToastMessage("Error deleting user.", false);
+            });
+        };
+
+        // Set up the action for the Cancel button
+        cancelButton.onclick = function () {
+          hideDeleteUserModal(); // Close the modal without making any changes
+        };
+      }
+
+      // Hide the Delete User Modal
+      function hideDeleteUserModal() {
+        const deleteModal = document.getElementById("deleteUserModal");
+        deleteModal.style.display = "none";
+      }
+
+      // Show Add User Modal
+      function showAddUserModal() {
+        document.getElementById("addUserModal").style.display = "block";
+      }
+
+      // Hide Add User Modal
+      function hideAddUserModal() {
+        document.getElementById("addUserModal").style.display = "none";
+      }
+
+      // Handle Add User Form Submission
+      document
+        .getElementById("addUserForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault(); // Prevent form from refreshing the page
+
+          // Get form data
+          const username = document.getElementById("newUsername").value;
+          const lastname = document.getElementById("newLastname").value;
+          const email = document.getElementById("newEmail").value;
+
+          // Send request to server to create a new user
+          fetch("/add_user", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, lastname, email }),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.success) {
+                showToastMessage("User added successfully!", true);
+                hideAddUserModal(); // Close the modal
+                showAllUsersModal(); // Refresh the users list
+              } else {
+                showToastMessage("Failed to add user.", false);
+              }
+            })
+            .catch((error) => {
+              console.error("Error adding user:", error);
+              showToastMessage("Error adding user.", false);
+            });
+        });
+
+      // Show Alter User Modal with pre-filled data
+      function alterUser(userId) {
+        fetch(`/get_user/${userId}`)
+          .then((response) => response.json())
+          .then((user) => {
+            if (user.success === false) {
+              showToastMessage("Failed to load user data.", false);
+            } else {
+              document.getElementById("alterUsername").value = user.username;
+              document.getElementById("alterLastname").value = user.lastname;
+
+              document.getElementById("alterUserForm").onsubmit = function (
+                event
+              ) {
+                event.preventDefault();
+
+                const username = document.getElementById("alterUsername").value;
+                const lastname = document.getElementById("alterLastname").value;
+
+                fetch(`/alter_user/${userId}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ username, lastname }),
+                })
+                  .then((response) => response.json())
+                  .then((data) => {
+                    if (data.success) {
+                      showToastMessage("User updated successfully!", true);
+                      hideAlterUserModal();
+                      showAllUsersModal();
+                    } else {
+                      showToastMessage("Failed to update user.", false);
+                    }
+                  })
+                  .catch((error) => {
+                    console.error("Error updating user:", error);
+                    showToastMessage("Error updating user.", false);
+                  });
+              };
+
+              document.getElementById("alterUserModal").style.display = "block";
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching user data:", error);
+            showToastMessage("Failed to load user data.", false);
+          });
+      }
+
+      // Hide Alter User Modal
+      function hideAlterUserModal() {
+        document.getElementById("alterUserModal").style.display = "none";
+      }
+
+      // Show Message Modal with custom message
+      function showMessageModal(message, isSuccess = true) {
+        const messageContent = document.getElementById("messageContent");
+        messageContent.textContent = message;
+
+        // Set background color for success or error
+        const messageModal = document.getElementById("messageModal");
+        if (isSuccess) {
+          messageModal.style.backgroundColor = "green"; // Green for success
+        } else {
+          messageModal.style.backgroundColor = "red"; // Red for error
+        }
+
+        messageModal.style.display = "block"; // Show the modal
+      }
+
+      // Hide the Message Modal
+      function hideMessageModal() {
+        const messageModal = document.getElementById("messageModal");
+        messageModal.style.display = "none"; // Hide the modal
+      }
+      // Show Toast Message
+      function showToastMessage(message, isSuccess = true) {
+        const toast = document.getElementById("toastMessage");
+        const toastContent = document.getElementById("toastContent");
+
+        // Set the message text
+        toastContent.textContent = message;
+
+        // Change background color based on success or error
+        toast.style.backgroundColor = isSuccess ? "green" : "red";
+
+        // Show the toast
+        toast.style.display = "block";
+
+        // Automatically hide the toast after 3 seconds
+        setTimeout(() => {
+          hideToastMessage();
+        }, 3000);
+      }
+
+      // Hide Toast Message
+      function hideToastMessage() {
+        const toast = document.getElementById("toastMessage");
+        toast.style.display = "none";
+      }
+    </script>
+  </body>
+</html>
