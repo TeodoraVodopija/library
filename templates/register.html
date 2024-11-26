@@ -29,7 +29,6 @@
           <div class="form-wrapper">
             <h1 class="text-center">Register</h1>
             <form method="POST" action="{{ url_for('register') }}">
-              <!-- Name and Lastname Fields -->
               <div class="form-group">
                 <label for="first_name">First Name</label>
                 <input
@@ -54,8 +53,6 @@
                   required
                 />
               </div>
-
-              <!-- Email Field -->
               <div class="form-group">
                 <label for="email">Email</label>
                 <input
@@ -71,8 +68,6 @@
                 <div class="invalid-feedback">{{ email_error }}</div>
                 {% endif %}
               </div>
-
-              <!-- Password Field -->
               <div class="form-group">
                 <label for="password">Password</label>
                 <input
@@ -85,8 +80,6 @@
                   required
                 />
               </div>
-
-              <!-- Confirm Password Field -->
               <div class="form-group">
                 <label for="confirm_password">Confirm Password</label>
                 <input
@@ -102,7 +95,6 @@
                 <div class="invalid-feedback">{{ confirm_password_error }}</div>
                 {% endif %}
               </div>
-
               <button type="submit" class="btn btn-primary btn-block">
                 Register
               </button>

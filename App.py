@@ -48,7 +48,7 @@ def load_user(user_id):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}  # ALLOWED_EXTENSIONS
 
-# Konfiguracija za MySQL
+# Configuration for MySQL
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = '#root_pass1!'
@@ -344,21 +344,19 @@ def add_book():
     image_file = request.files.get('image_file')
     image_path = None
 
-    # Limit URL length before saving to the database
-    MAX_URL_LENGTH = 512
-    if image_url and len(image_url) > MAX_URL_LENGTH:
-        image_url = image_url[:MAX_URL_LENGTH]
+    max_url_length = 512
+    if image_url and len(image_url) > max_url_length:
+        image_url = image_url[:max_url_length]
 
     if image_file and allowed_file(image_file.filename):
         filename = secure_filename(image_file.filename)
         image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         image_file.save(image_path)
-        image_url = url_for('static', filename=f'uploads/{filename}')  # Save the relative path in DB
+        image_url = url_for('static', filename=f'uploads/{filename}')  
 
     if not image_url:
         image_url = None
 
-    # Use the current user to associate the book with the logged-in user
     user_id = current_user.id
 
     cur = mysql.connection.cursor()
@@ -374,6 +372,7 @@ def add_book():
         cur.close()
 
     return redirect(url_for('books'))
+
 @app.route('/alter_book', methods=['POST'])
 def alter_book():
     book_id = request.form.get('id')
@@ -462,7 +461,6 @@ def deactivate_account():
     except Exception:
         traceback.print_exc()  # Print stack trace for debugging
         return jsonify({"success": False, "error": "Failed to deactivate account."}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=8080)

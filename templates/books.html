@@ -32,7 +32,6 @@
       <button class="add-book-btn" onclick="showAddBookModal()">
         Add New Book
       </button>
-      <!-- Global buttons for Alter and Delete, hidden by default -->
       <button
         class="alter-book-btn"
         id="alterBookBtn"
@@ -264,7 +263,6 @@
         </h2>
         <div id="userListContainer">
           <ul></ul>
-          <!-- User list will be dynamically populated -->
         </div>
       </div>
     </div>
@@ -340,11 +338,9 @@
     <!-- JavaScript -->
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // Add year selection for both Add and Alter Modals
         const currentYear = 2024;
         const startYear = 1200;
 
-        // Populate year dropdown for Add Book Modal
         const yearSelect = document.getElementById("year_published");
         for (let year = currentYear; year >= startYear; year--) {
           const option = document.createElement("option");
@@ -353,7 +349,6 @@
           yearSelect.appendChild(option);
         }
 
-        // Populate year dropdown for Alter Book Modal dynamically when the modal is opened
         const alterYearSelect = document.getElementById("alter_year_published");
         for (let year = currentYear; year >= startYear; year--) {
           const option = document.createElement("option");
@@ -381,7 +376,6 @@
                 return;
               }
 
-              // Populate the modal fields with the fetched book details
               document.getElementById("alter_book_id").value = book.id;
               document.getElementById("alter_title").value = book.title;
               document.getElementById("alter_author").value = book.author;
@@ -392,7 +386,6 @@
               alterYearSelect.value = book.year_published;
               document.getElementById("alter_image_url").value = book.image_url;
 
-              // Show the modal
               document.getElementById("alterBookModal").style.display = "block";
             })
             .catch((error) => {
@@ -440,7 +433,7 @@
       }
 
       function confirmDelete(bookId) {
-        bookToDeleteId = bookId; // Store the book ID to delete
+        bookToDeleteId = bookId;
         document.getElementById("deleteConfirmationModal").style.display =
           "block";
       }
@@ -463,26 +456,21 @@
           })
             .then((response) => {
               if (!response.ok) {
-                // If the server responds with an error, throw an error
                 throw new Error("Failed to delete the book.");
               }
               return response.json(); // parse response JSON
             })
             .then((data) => {
               if (data.success) {
-                // If deletion was successful, remove the book from the DOM
                 const bookCard = document.getElementById(
                   `bookCard_${bookToDeleteId}`
                 );
                 if (bookCard) {
                   bookCard.remove();
                 }
-                // Hide the delete confirmation modal
                 hideDeleteConfirmationModal();
-                // Refresh the page to reflect the changes
-                location.reload(); // This will reload the page
+                location.reload();
               }
-              // No need to show any error message here, just silently return on success
             })
             .catch((error) => {
               console.error("Error deleting book:", error);
@@ -543,16 +531,15 @@
       // Show modal and fetch users
       function showAllUsersModal() {
         const modal = document.getElementById("allUsersModal");
-        modal.style.display = "block"; // Make the modal visible
+        modal.style.display = "block";
 
-        // Fetch users from the server
-        fetch("/users") // Make sure this matches your route
+        fetch("/users")
           .then((response) => response.json())
           .then((users) => {
-            console.log(users); // Log the response to see what you're getting
+            console.log(users);
             const userListContainer =
               document.getElementById("userListContainer");
-            userListContainer.innerHTML = ""; // Clear the existing list before repopulating
+            userListContainer.innerHTML = "";
 
             if (users.length > 0) {
               users.forEach((user) => {
@@ -586,36 +573,27 @@
 
       function hideAllUsersModal() {
         const modal = document.getElementById("allUsersModal");
-        modal.style.display = "none"; // Hide the modal when closed
+        modal.style.display = "none";
       }
 
       // Show the Delete User Modal
-      // Show the Delete User Modal
       function showDeleteUserModal(userId) {
-        // Show the modal
         const deleteModal = document.getElementById("deleteUserModal");
         deleteModal.style.display = "block";
 
-        // Select confirm and cancel buttons
         const confirmButton = document.getElementById("confirmDeleteButton");
         const cancelButton = document.getElementById("cancelDeleteButton");
 
-        // Set up the action for the Confirm Delete button
         confirmButton.onclick = function () {
-          // Hide the modal immediately
           hideDeleteUserModal();
 
-          // Proceed with deletion
           fetch(`/deactivate_user/${userId}`, { method: "DELETE" })
             .then((response) => response.json())
             .then((data) => {
               if (data.success) {
-                // Show success toast
                 showToastMessage("User deleted successfully!", true);
-                // Remove the user row from the UI
                 document.getElementById(`userRow_${userId}`).remove();
               } else {
-                // Show error toast
                 showToastMessage(data.error || "Failed to delete user.", false);
               }
             })
@@ -625,9 +603,8 @@
             });
         };
 
-        // Set up the action for the Cancel button
         cancelButton.onclick = function () {
-          hideDeleteUserModal(); // Close the modal without making any changes
+          hideDeleteUserModal();
         };
       }
 
@@ -651,14 +628,12 @@
       document
         .getElementById("addUserForm")
         .addEventListener("submit", function (event) {
-          event.preventDefault(); // Prevent form from refreshing the page
+          event.preventDefault();
 
-          // Get form data
           const username = document.getElementById("newUsername").value;
           const lastname = document.getElementById("newLastname").value;
           const email = document.getElementById("newEmail").value;
 
-          // Send request to server to create a new user
           fetch("/add_user", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -668,8 +643,8 @@
             .then((data) => {
               if (data.success) {
                 showToastMessage("User added successfully!", true);
-                hideAddUserModal(); // Close the modal
-                showAllUsersModal(); // Refresh the users list
+                hideAddUserModal();
+                showAllUsersModal();
               } else {
                 showToastMessage("Failed to add user.", false);
               }
@@ -739,21 +714,20 @@
         const messageContent = document.getElementById("messageContent");
         messageContent.textContent = message;
 
-        // Set background color for success or error
         const messageModal = document.getElementById("messageModal");
         if (isSuccess) {
-          messageModal.style.backgroundColor = "green"; // Green for success
+          messageModal.style.backgroundColor = "green";
         } else {
-          messageModal.style.backgroundColor = "red"; // Red for error
+          messageModal.style.backgroundColor = "red";
         }
 
-        messageModal.style.display = "block"; // Show the modal
+        messageModal.style.display = "block";
       }
 
       // Hide the Message Modal
       function hideMessageModal() {
         const messageModal = document.getElementById("messageModal");
-        messageModal.style.display = "none"; // Hide the modal
+        messageModal.style.display = "none";
       }
 
       // Show Delete All Users Confirmation Modal
@@ -774,7 +748,6 @@
 
       // Confirm Delete All Users
       function confirmDeleteAllUsers() {
-        // Send request to the server to delete all users
         fetch(`/delete_all_users`, {
           method: "DELETE",
           headers: {
@@ -789,9 +762,7 @@
           })
           .then((data) => {
             if (data.success) {
-              // Hide the delete confirmation modal
               hideDeleteAllUsersConfirmationModal();
-              // Refresh the page to reflect changes
               location.reload();
             }
           })
@@ -809,16 +780,12 @@
         const toast = document.getElementById("toastMessage");
         const toastContent = document.getElementById("toastContent");
 
-        // Set the message text
         toastContent.textContent = message;
 
-        // Change background color based on success or error
         toast.style.backgroundColor = isSuccess ? "green" : "red";
 
-        // Show the toast
         toast.style.display = "block";
 
-        // Automatically hide the toast after 3 seconds
         setTimeout(() => {
           hideToastMessage();
         }, 3000);
