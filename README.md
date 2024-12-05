@@ -42,29 +42,17 @@ This web application allows both admins and users (authors) to manage users and 
    source venv/bin/activate  # On Windows, use venv\Scripts\activate
    ```
 
-3. **Install dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure your database**:
+3. **Configure your database**:
    - Make sure MySQL is installed and running.
    - Create the `users` and `books` tables in your MySQL database.
    - Set up your database connection details in the app’s configuration file.
 
-5. **Run the application**:
+4. **Run the application**:
    ```bash
    python app.py
    ```
 
-6. Open your browser and go to `http://localhost:8080` to use the app.
-
-## Admin Credentials
-
-- **Username**: `mato@gmail.com`
-- **Password**: `matomato`
-
-You can log in with these credentials to access the admin dashboard where you can manage users and books.
+5. Open your browser and go to `http://localhost:8080` to use the app.
 
 ## Application Structure
 
@@ -112,8 +100,7 @@ You can log in with these credentials to access the admin dashboard where you ca
 
 ### How to Use the App:
 
-1. **Login**:
-   - Use the provided admin credentials (`mato@gmail.com` / `matomato`) to log into the system.
+1. **Login**
 
 2. **Manage Users**:
    - From the "All Users" section, the admin can:
